@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow Pro - 企業級效能與日程監測系統</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=JetBrains+Mono:wght@300;400;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .retro-font {
+            font-family: 'Courier Prime', 'JetBrains Mono', monospace;
+        }
+        /* 隱藏滾動條 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 電腦/手機版排版轉換 CSS */
+        .app-mobile {
+            max-width: 28rem; /* max-w-md */
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            min-height: 100vh;
+            border-left-width: 1px;
+            border-right-width: 1px;
+            border-color: #27272a; /* border-zinc-800 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .app-desktop {
+            max-width: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            min-height: 100vh;
+        }
+
+        /* 奇葩心靈雞湯 WordArt 風格與奇特動效 */
+        @keyframes text-flash {
+            0%, 100% { color: #f43f5e; text-shadow: 0 0 10px #f43f5e, 0 0 20px #e11d48; }
+            33% { color: #3b82f6; text-shadow: 0 0 10px #3b82f6, 0 0 20px #2563eb; }
+            66% { color: #eab308; text-shadow: 0 0 10px #eab308, 0 0 20px #ca8a04; }
+        }
+        .retro-wordart {
+            font-size: 2.25rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #ff007f, #3b82f6, #ca8a04, #ff007f);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: wordart-anim 3s linear infinite, text-flash 1.5s infinite;
+        }
+        @keyframes wordart-anim {
+            to { background-position: 200% center; }
+        }
+        @keyframes rotate-tacky {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg) scale(1.1); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-tacky {
+            animation: rotate-tacky 4s linear infinite;
+        }
+        @keyframes star-fall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(400px) rotate(360deg); opacity: 0; }
+        }
+        .falling-star {
+            position: absolute;
+            animation: star-fall 3s linear infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- 主應用容器 (預設為手機大小 app-mobile，可一鍵轉成電腦滿版 app-desktop) -->
+    <div id="app" class="app-mobile bg-zinc-900 flex flex-col relative pb-20 transition-all duration-300">
+        
+        <!-- 頂部 Header (低調、像工作軟體) -->
+        <header id="main-header" class="bg-zinc-950 text-zinc-100 p-4 border-b border-zinc-800 sticky top-0 z-40 transition-all duration-300">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 id="brand-title" class="text-lg font-bold tracking-tight flex items-center gap-2 text-zinc-200">
+                        <i class="fa-solid fa-compass-drafting text-zinc-400"></i> FocusFlow Pro
+                    </h1>
+                    <p id="brand-subtitle" class="text-[10px] text-zinc-500 mt-0.5">Automated Workload & Schedule Monitor</p>
+                </div>
+                
+                <div class="flex items-center gap-1.5">
+                    <!-- 電腦/手機排版切換器 -->
+                    <button onclick="toggleLayoutMode()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs px-2.5 py-1.5 rounded border border-zinc-700 transition-all flex items-center gap-1" title="切換電腦/手機版面">
+                        <i class="fa-solid fa-desktop text-[10px]"></i> <span id="layout-btn-text" class="hidden sm:inline">電腦滿版</span>
+                    </button>
+                    <!-- 偽裝切換器 -->
+                    <button onclick="toggleStealthMode()" class="bg-zinc-850 hover:bg-zinc-800 text-zinc-400 text-xs px-2.5 py-1.5 rounded border border-zinc-800 transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-eye-slash text-[10px]"></i> <span id="stealth-btn-text">偽裝</span>
+                    </button>
+                    <!-- 低調能量條捷徑 -->
+                    <div class="flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+                        <span class="text-[10px] text-zinc-400">⚡</span>
+                        <span id="header-battery" class="text-[10px] font-mono font-bold text-emerald-500">100%</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 偽裝覆蓋層：Outlook 企業信箱 -->
+        <div id="stealth-outlook-overlay" class="hidden absolute inset-0 bg-white text-zinc-800 z-50 flex flex-col font-sans select-none">
+            <!-- Outlook Header -->
+            <div class="bg-[#0078d4] text-white px-4 py-3 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                    <span class="font-semibold text-sm">Outlook (公司郵件)</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <div onclick="toggleStealthMode()" class="w-2 h-2 rounded-full bg-green-400"></div>
+                </div>
+            </div>
+            <!-- Search Bar -->
+            <div class="p-2 bg-zinc-100 border-b border-zinc-200">
+                <div class="bg-white rounded p-1.5 text-xs text-zinc-400 flex items-center gap-2 border border-zinc-200">
+                    <i class="fa-solid fa-search"></i> 搜尋郵件、連絡人、行事曆
+                </div>
+            </div>
+            <!-- Mail List -->
+            <div class="flex-grow overflow-y-auto divide-y divide-zinc-100 bg-white">
+                <div class="p-3 bg-blue-50/50 flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0">HR</div>
+                    <div class="flex-grow text-xs">
+                        <div class="flex justify-between font-bold text-zinc-900">
+                            <span>人力資源部 - 考勤通知</span>
+                            <span class="text-[10px] text-blue-600 font-normal">下午 2:14</span>
+                        </div>
+                        <div class="text-blue-600 font-semibold mt-0.5">【重要】本季度考核與出勤紀錄確認</div>
+                        <div class="text-zinc-500 mt-1 truncate">各位同仁好，請於本週五前至系統確認個人考核及出勤簽到補登...</div>
+                    </div>
+                </div>
+                <div class="p-3 flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-zinc-500 text-white flex items-center justify-center text-xs font-bold shrink-0">PM</div>
+                    <div class="flex-grow text-xs">
+                        <div class="flex justify-between font-semibold text-zinc-900">
+                            <span>專案經理 (David)</span>
+                            <span class="text-[10px] text-zinc-400">中午 12:05</span>
+                        </div>
+                        <div class="text-zinc-800 mt-0.5">RE: 關於新系統上線之時程確認會議</div>
+                        <div class="text-zinc-500 mt-1 truncate">收到，那會議時間就訂在明天下午，我會邀請客戶窗口一同參與...</div>
+                    </div>
+                </div>
+                <!-- 底部提示 -->
+                <div class="p-8 text-center text-zinc-300 text-[11px]">
+                    已經載入所有近期郵件 (共 2 封未讀) <br>
+                    <span class="text-zinc-400 hover:underline cursor-pointer" onclick="toggleStealthMode()">點擊此處關閉偽裝</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要內容區域 -->
+        <main class="flex-grow p-4 no-scrollbar overflow-y-auto">
+            
+            <!-- Tab 1: 尬聊話題產生器 -->
+            <section id="tab-chat" class="tab-content space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <h2 class="text-sm font-bold text-zinc-200 tracking-wider uppercase font-mono">Retreat Protocol / 無心棒讀與光速撤退</h2>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-4">不討好，也不特立獨行。提供神色平淡、聽起來極為自然的客套說辭，幫你快速在不被懷疑的情況下優雅退場。</p>
+                    
+                    <!-- 場景選擇 -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <button onclick="generateTopic('elevator')" class="scenario-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-lg text-xs font-bold text-left flex items-center justify-between text-zinc-300 transition-all">
+                            <span>🏢 電梯遇主管 (肚子不舒服)</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-600"></i>
+                        </button>
+                        <button onclick="generateTopic('reunion')" class="scenario-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-lg text-xs font-bold text-left flex items-center justify-between text-zinc-300 transition-all">
+                            <span>🎓 同學重聚 (工作急件)</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-600"></i>
+                        </button>
+                        <button onclick="generateTopic('relative')" class="scenario-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-lg text-xs font-bold text-left flex items-center justify-between text-zinc-300 transition-all">
+                            <span>🧧 家族聚會 (朋友急找)</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-600"></i>
+                        </button>
+                        <button onclick="generateTopic('haircut')" class="scenario-btn bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 p-2.5 rounded-lg text-xs font-bold text-left flex items-center justify-between text-zinc-300 transition-all">
+                            <span>💇 造型沙龍 (頭痛補眠)</span>
+                            <i class="fa-solid fa-chevron-right text-[10px] text-zinc-600"></i>
+                        </button>
+                    </div>
+
+                    <!-- 客製化場景 -->
+                    <div class="mt-4 border-t border-zinc-800 pt-4">
+                        <label class="block text-[11px] font-bold text-zinc-400 mb-1.5"><i class="fa-solid fa-ban text-zinc-500"></i> 自訂異常場景：自然撤退句點詞 (AI 生成)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="ai-scenario-input" placeholder="例如：同事問我週末要做什麼" class="flex-grow text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 outline-none text-zinc-100 focus:border-zinc-700">
+                            <button onclick="generateAITopic()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 px-4 py-2 rounded font-bold text-xs shrink-0 flex items-center gap-1 transition-all">
+                                計算解法
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 顯示結果 -->
+                    <div id="topic-result-box" class="hidden mt-4 border border-zinc-800 bg-zinc-900/50 p-4 rounded-lg relative">
+                        <button onclick="copyText('topic-text')" class="absolute top-3 right-3 text-zinc-500 hover:text-zinc-300" title="複製台詞">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                        <div class="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-widest mb-1.5" id="topic-scene-title">電梯遇主管</div>
+                        <p id="topic-text" class="text-zinc-200 text-xs leading-relaxed font-medium bg-zinc-950 p-3 rounded border border-zinc-800">「哈哈，老闆好！今天天氣真好，您今天也這麼早啊！」</p>
+                        <div class="mt-2.5 flex items-start gap-1.5 text-[11px] text-amber-500">
+                            <span class="shrink-0">⚡ 物理撤退動作：</span>
+                            <p id="topic-tip" class="italic">說完立刻假裝翻找公事包或滑手機。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: 脫身藉口製造機 -->
+            <section id="tab-excuse" class="tab-content hidden space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-zinc-500"></span>
+                        <h2 class="text-sm font-bold text-zinc-200 tracking-wider uppercase font-mono">Strategic Retreat / 撤退路徑產生</h2>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-6">模擬不可抗力之外部事件，提供無痛撤退的黃金藉口。</p>
+
+                    <div class="space-y-3">
+                        <!-- 假來電設定與啟動 -->
+                        <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-lg space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm border border-zinc-700">
+                                        <i class="fa-solid fa-phone"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs font-bold text-zinc-200">仿真來電逃脫</h3>
+                                        <p class="text-[10px] text-zinc-500">產生與 iOS 高度雷同之來電</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 自訂來電人名稱 -->
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <div>
+                                    <label class="block text-[9px] text-zinc-500 uppercase tracking-widest mb-1">顯示聯絡人名稱</label>
+                                    <input type="text" id="fake-caller-name" value="主管王經理 (急件)" class="w-full text-xs bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-zinc-200 outline-none focus:border-zinc-700">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] text-zinc-500 uppercase tracking-widest mb-1">延遲呼叫時間</label>
+                                    <select id="fake-call-delay" class="w-full text-xs bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-zinc-200 outline-none">
+                                        <option value="5">5 秒後 (立刻自救)</option>
+                                        <option value="30">30 秒後</option>
+                                        <option value="60">1 分鐘後</option>
+                                        <option value="180">3 分鐘後</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button onclick="scheduleFakeCall()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-bold py-2 rounded border border-zinc-700 transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-satellite-dish text-[10px]"></i> 預約假來電
+                            </button>
+                        </div>
+
+                        <!-- 假外送訂單 -->
+                        <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-lg flex justify-between items-center">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 text-sm border border-zinc-700">
+                                    <i class="fa-solid fa-motorcycle"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-bold text-zinc-200">仿真外送追蹤儀</h3>
+                                    <p class="text-[10px] text-zinc-500">切換到極致逼真外送已送達畫面</p>
+                                </div>
+                            </div>
+                            <button onclick="triggerFakeDelivery()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold px-3 py-2 rounded border border-zinc-700 transition-all">
+                                模擬外送抵達
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: 工作偷懶用 -->
+            <section id="tab-lazy" class="tab-content hidden space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-zinc-500"></span>
+                        <h2 class="text-sm font-bold text-zinc-200 tracking-wider uppercase font-mono">System Maintenance / 電腦防打擾</h2>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-6">將螢幕切換成 Windows/Mac 更新畫面。理直氣壯不看螢幕、不接任務。</p>
+
+                    <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-lg space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-400 mb-1.5">系統更新類型：</label>
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <button onclick="setSystemType('win')" id="sys-win-btn" class="sys-type-btn border-2 border-zinc-100 bg-zinc-950 text-xs py-2 rounded font-bold text-zinc-100">
+                                    Windows 11
+                                </button>
+                                <button onclick="setSystemType('mac')" id="sys-mac-btn" class="sys-type-btn border border-zinc-800 bg-zinc-950 text-xs py-2 rounded font-bold text-zinc-400">
+                                    macOS Ventura
+                                </button>
+                            </div>
+
+                            <label class="block text-xs font-bold text-zinc-400 mb-1.5">預定擺爛時間：</label>
+                            <select id="update-timer" class="w-full text-xs bg-zinc-950 border border-zinc-800 rounded p-2 text-zinc-200 outline-none">
+                                <option value="60">1 分鐘 (快速示範)</option>
+                                <option value="300">5 分鐘 (泡杯咖啡)</option>
+                                <option value="900">15 分鐘 (洗手間避難)</option>
+                                <option value="1800">30 分鐘 (小睡午覺)</option>
+                                <option value="3600">60 分鐘 (究極躲避)</option>
+                            </select>
+                        </div>
+
+                        <div class="p-3 bg-zinc-950 rounded border border-zinc-800 text-[11px] text-zinc-500 leading-relaxed">
+                            💡 <strong>掩護指示：</strong>啟動後，瀏覽器將覆蓋全螢幕。你可以放心把鍵盤推開、雙手抱胸、若有所思地盯著螢幕嘆氣。按下 <kbd class="bg-zinc-800 px-1 py-0.5 rounded text-zinc-300">ESC</kbd> 可隨時退出。
+                        </div>
+
+                        <button onclick="startFakeUpdate()" class="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold py-2.5 rounded text-xs transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-display"></i> 啟動維護覆蓋
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: 社交能量行事曆 -->
+            <section id="tab-battery" class="tab-content hidden space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <h2 class="text-sm font-bold text-zinc-200 tracking-wider uppercase font-mono">Agenda & Social Battery / 今日能耗行事曆</h2>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-4">登錄今日的日程行程，系統將透過 AI 動態計算每個社交事件的精神能耗，累積增減主社交電量。</p>
+
+                    <!-- 大電量計量元件 -->
+                    <div class="flex flex-col items-center justify-center py-5 bg-zinc-950/50 border border-zinc-800 rounded-xl mb-3">
+                        <div class="w-36 h-16 border-2 border-zinc-700 rounded-xl relative flex items-center p-1 bg-zinc-900">
+                            <div class="absolute -right-2.5 top-1/2 -translate-y-1/2 w-2 h-6 bg-zinc-700 rounded-r"></div>
+                            <div id="battery-fill" class="h-full rounded-lg transition-all duration-500 bg-gradient-to-r from-emerald-600 to-emerald-400" style="width: 100%;"></div>
+                            <div class="absolute inset-0 flex items-center justify-center font-mono font-bold text-base text-zinc-100" id="battery-text">100%</div>
+                        </div>
+                        <div id="battery-status-msg" class="text-[11px] text-emerald-500 mt-2 font-bold tracking-wide">🟢 系統正常：當前社交緩衝充足。</div>
+                    </div>
+
+                    <!-- 行程手動輸入欄 -->
+                    <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-lg space-y-2">
+                        <div class="flex gap-2">
+                            <input type="text" id="schedule-time" value="12:00" class="w-16 text-center text-xs bg-zinc-950 border border-zinc-800 rounded p-2 text-zinc-200 outline-none focus:border-zinc-700 font-mono font-bold">
+                            <input type="text" id="schedule-desc" placeholder="例如：開例會回報專案進度" class="flex-grow text-xs bg-zinc-950 border border-zinc-800 rounded p-2 text-zinc-200 outline-none focus:border-zinc-700">
+                            <button onclick="addScheduleItem()" class="bg-zinc-100 hover:bg-zinc-200 text-zinc-950 px-3 py-2 rounded text-xs font-bold shrink-0 transition-all">
+                                新增日程
+                            </button>
+                        </div>
+                        <div class="text-[10px] text-zinc-500 flex justify-between items-center px-1">
+                            <span>💡 支援 AI 智慧能耗語意分析</span>
+                            <span class="text-amber-500 cursor-pointer text-[10px] hover:underline" onclick="loadDefaultSchedules()">載入預設行程樣板</span>
+                        </div>
+                    </div>
+
+                    <!-- 時間軸 -->
+                    <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-800 pb-2">
+                            📅 Schedule Timeline / 今日日程事件
+                        </h3>
+                        
+                        <div id="calendar-timeline" class="space-y-3 max-h-64 overflow-y-auto no-scrollbar pr-1">
+                            <!-- 空白初始狀態 -->
+                            <p class="text-zinc-600 italic text-xs text-center py-6">今日尚無日程規劃。請在上方輸入今天要做的事情。</p>
+                        </div>
+
+                        <!-- 總結 -->
+                        <div class="border-t border-zinc-800 pt-3 flex justify-between items-center text-xs font-mono">
+                            <span class="text-zinc-500">NET IMPACT / 累計能耗變動:</span>
+                            <span id="calendar-summary-pill" class="px-2.5 py-1 rounded font-bold bg-zinc-950 text-zinc-400">0%</span>
+                        </div>
+                        <div id="calendar-summary-suggestion" class="text-[11px] text-zinc-400 italic bg-zinc-950/60 p-2.5 rounded border border-zinc-800">
+                            請在上方安排你的日程。AI 會評估你的能耗，並提供客套且實用的撤退指引。
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 5: 假 Line (已完美更名為魔鬼老婆大人 ＋ 原始標準剪影頭貼) -->
+            <section id="tab-line" class="tab-content hidden h-[calc(100vh-14rem)] flex flex-col">
+                <div class="border border-zinc-800 rounded-xl bg-zinc-950 flex-grow flex flex-col overflow-hidden relative">
+                    <!-- Header -->
+                    <div class="bg-zinc-900 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <!-- 標準通訊軟體未設定大頭貼時的原始預設剪影頭貼 (100% 完美呈現) -->
+                            <div class="w-10 h-10 rounded-full overflow-hidden border border-zinc-700 relative shrink-0 bg-zinc-800">
+                                <svg viewBox="0 0 100 100" class="w-full h-full object-cover">
+                                    <!-- 預設灰色背景 -->
+                                    <circle cx="50" cy="50" r="50" fill="#3f3f46"/>
+                                    <!-- 預設人像頭部 -->
+                                    <circle cx="50" cy="40" r="18" fill="#a1a1aa"/>
+                                    <!-- 預設人像肩膀 -->
+                                    <path d="M20 80 C20 62, 30 58, 50 58 C70 58, 80 62, 80 80 Z" fill="#a1a1aa"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="chat-contact-name" class="font-bold text-xs text-zinc-200">魔鬼老婆大人</span>
+                                    <button onclick="editContactName()" class="text-zinc-500 hover:text-zinc-300 text-[10px]"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                                <div class="text-[9px] text-emerald-400 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 線上
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-zinc-400 flex gap-4 text-xs">
+                            <i class="fa-solid fa-phone cursor-pointer hover:text-zinc-200"></i>
+                            <i class="fa-solid fa-video cursor-pointer hover:text-zinc-200"></i>
+                        </div>
+                    </div>
+
+                    <!-- 聊天紀錄 -->
+                    <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-3.5 no-scrollbar bg-zinc-950 text-xs">
+                        <div class="text-center">
+                            <span class="bg-zinc-900 text-zinc-500 text-[9px] px-2.5 py-0.5 rounded border border-zinc-800">對話防偷看保護中</span>
+                        </div>
+                        
+                        <!-- 預設對話 -->
+                        <div class="flex gap-2 items-start">
+                            <div class="w-8 h-8 rounded-full overflow-hidden border border-zinc-700 shrink-0 bg-zinc-800">
+                                <svg viewBox="0 0 100 100" class="w-full h-full object-cover">
+                                    <circle cx="50" cy="50" r="50" fill="#3f3f46"/>
+                                    <circle cx="50" cy="40" r="18" fill="#a1a1aa"/>
+                                    <path d="M20 80 C20 62, 30 58, 50 58 C70 58, 80 62, 80 80 Z" fill="#a1a1aa"/>
+                                </svg>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-[9px] text-zinc-500 font-bold" id="chat-contact-label">魔鬼老婆大人</div>
+                                <div class="bg-zinc-900 text-zinc-200 p-2.5 rounded-lg rounded-tl-none border border-zinc-800 max-w-[200px] leading-relaxed font-medium">
+                                    你等一下有空嗎？新專案時程排定好了嗎？
+                                </div>
+                            </div>
+                            <span class="text-[8px] text-zinc-600 self-end">15:40</span>
+                        </div>
+                    </div>
+
+                    <!-- 對方輸入狀態 -->
+                    <div id="typing-indicator" class="hidden px-4 py-1 text-[10px] text-zinc-500 italic flex items-center gap-1.5 bg-zinc-950">
+                        <i class="fa-solid fa-ellipsis animate-bounce"></i> 正在回覆中...
+                    </div>
+
+                    <!-- 輸入欄 -->
+                    <form onsubmit="sendFakeMessage(event)" class="bg-zinc-900 p-2 flex gap-2 border-t border-zinc-800">
+                        <input type="text" id="line-input-msg" placeholder="隨便打字發送，營造你很忙的假象..." class="flex-grow text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 outline-none text-zinc-200 focus:border-zinc-700">
+                        <button type="submit" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 w-8 h-8 rounded flex items-center justify-center shrink-0 border border-zinc-700">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Tab 6: 紅白機太空遊戲 (NES Space Shooter) -->
+            <section id="tab-game" class="tab-content hidden space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60 flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></span>
+                            <h2 class="text-[11px] font-bold text-zinc-200 uppercase tracking-widest font-mono">1985 RETRO SHIELD DEFENDER</h2>
+                        </div>
+                        <div class="text-xs text-red-500 font-mono font-bold">SCORE: <span id="retro-score">000</span></div>
+                    </div>
+
+                    <!-- 遊戲數值面板 -->
+                    <div class="w-full flex justify-between items-center bg-zinc-950 p-2 border border-zinc-800 rounded mb-2 text-[10px] font-mono">
+                        <div class="flex items-center gap-1">
+                            <span class="text-zinc-500">HP:</span>
+                            <div class="w-20 h-2 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
+                                <div id="game-hp-bar" class="h-full bg-emerald-500 transition-all duration-150" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-zinc-500">WEAPON:</span>
+                            <span id="game-weapon-level" class="text-cyan-400 font-bold">LV.1 SINGLE</span>
+                        </div>
+                    </div>
+
+                    <!-- Canvas 遊戲主體 -->
+                    <div class="relative w-full aspect-[4/3] bg-black border-4 border-zinc-700 rounded-lg overflow-hidden flex items-center justify-center">
+                        <canvas id="gameCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                        
+                        <!-- 遊戲結束/開始蓋板 -->
+                        <div id="game-over-overlay" class="absolute inset-0 bg-black/95 flex flex-col items-center justify-center text-center p-6 space-y-4 z-10 select-none">
+                            <div class="border-4 border-dashed border-red-500/30 p-4 rounded-lg bg-zinc-950">
+                                <h3 id="game-title" class="text-red-500 text-lg font-mono font-black tracking-widest animate-bounce">I人防禦戰：太空紅白機</h3>
+                                <p class="text-[10px] text-zinc-400 max-w-[240px] leading-relaxed mt-2 mx-auto">
+                                    操控經典像素戰機，擊碎「無盡會議、親戚追問、主管來電」等高能耗威脅！
+                                </p>
+                            </div>
+                            <div class="text-[9px] text-zinc-500 font-mono space-y-1">
+                                <div>🖱️ 拖曳/滑動螢幕移動並自動射擊</div>
+                                <div>⌨️ 電腦：鍵盤 WASD 移動 ＋ 空白鍵發射</div>
+                            </div>
+                            <button onclick="initSpaceShooter()" class="bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-xs px-6 py-2.5 rounded border border-red-400 transition-all shadow-lg shadow-red-900/40">
+                                START GAME
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-zinc-500 mt-2 text-center w-full">🎮 具備經典 8-Bit 鋸齒波射擊音與重低音碰撞爆炸聲！</p>
+                </div>
+            </section>
+
+            <!-- Tab 7: 奇葩心靈重組端 (Super Useless Comfort) -->
+            <section id="tab-synergy" class="tab-content hidden space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60 overflow-hidden relative min-h-[350px] flex flex-col justify-between">
+                    
+                    <!-- 奇異背景裝飾與走馬燈 -->
+                    <marquee class="bg-rose-950/40 text-rose-400 text-xs py-1 border-y border-rose-800 font-bold tracking-wide">
+                        🌟 警告：即將釋放極端無用精神雞湯 🌟 你真的超級無敵棒 🌟 請做好精神被敷衍的心理準備 🌟
+                    </marquee>
+
+                    <div class="flex-grow flex flex-col items-center justify-center text-center space-y-6 py-8 relative">
+                        <!-- 旋轉 tacky 圖形 -->
+                        <div class="absolute w-24 h-24 rounded-full border-4 border-dashed border-yellow-500/20 animate-tacky pointer-events-none"></div>
+
+                        <!-- 閃爍 tacky 藝術字 -->
+                        <h2 class="retro-wordart text-4xl">你超棒！！！</h2>
+
+                        <div class="bg-black/60 p-4 border-2 border-yellow-500/40 rounded-lg shadow-2xl max-w-xs relative">
+                            <span class="absolute -top-3 -left-3 text-2xl">✨</span>
+                            <span class="absolute -bottom-3 -right-3 text-2xl">💖</span>
+                            <p class="text-[10px] font-mono text-yellow-500 uppercase tracking-widest mb-1.5">✦ 無用安慰生成器 ✦</p>
+                            <p id="comfort-text" class="text-xs text-zinc-200 leading-relaxed font-bold font-sans">
+                                「如果今天過得很累，請閉上眼睛。這樣你就看不見繁瑣的工作，也聽不見別人的碎碎念了。」
+                            </p>
+                        </div>
+
+                        <button onclick="generateCheesyComfort()" class="bg-gradient-to-r from-yellow-500 via-pink-500 to-purple-600 hover:scale-105 active:scale-95 text-black font-black text-xs px-5 py-2 rounded-full border border-white transition-all shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+                            ⚡ 補充廉價精神雞湯 ⚡
+                        </button>
+                    </div>
+
+                    <!-- 底部免責宣告 -->
+                    <div class="text-[9px] text-zinc-600 text-center font-mono">
+                        FOCUSFLOW INTERNAL SYNERGY RESETTER v0.98.0
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 8: 專屬偶像祭壇 (新增之5相框功能頁面) -->
+            <section id="tab-idol" class="tab-content hidden space-y-4">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-zinc-950/60">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></span>
+                        <h2 class="text-sm font-bold text-zinc-200 tracking-wider uppercase font-mono">My Idol Sanctuary / 專屬偶像祭壇</h2>
+                    </div>
+                    <p class="text-xs text-zinc-400">這是專屬於你與偶像的安心避風港。拖曳你最喜愛的偶像照片填滿特製的炫光、Q 版與斧星相框，治癒疲憊的靈魂。</p>
+                    <p class="text-[10px] text-zinc-500 italic">💡 提示：對著相框「按兩下 (Double Click)」可快速清空圖片。切換電腦/手機排版模式時會自動變更配置並清空圖片。</p>
+                    
+                    <!-- 5個客製化相框插槽配置容器 -->
+                    <div id="idol-grid-container" class="grid gap-4 mt-3">
+                        <!-- 由 JavaScript 動態生成/更新 -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- 底部導覽列 -->
+        <nav class="bg-zinc-950 border-t border-zinc-800 text-zinc-500 flex justify-around items-center h-16 absolute bottom-0 left-0 right-0 rounded-t-xl shadow-lg z-40">
+            <button onclick="switchTab('chat')" id="nav-chat" class="flex flex-col items-center gap-1 text-zinc-200 shrink-0">
+                <i class="fa-solid fa-brain text-[11px]"></i>
+                <span class="text-[8px] font-bold">脫逃</span>
+            </button>
+            <button onclick="switchTab('excuse')" id="nav-excuse" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-shield-halved text-[11px]"></i>
+                <span class="text-[8px] font-bold">路線</span>
+            </button>
+            <button onclick="switchTab('lazy')" id="nav-lazy" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-terminal text-[11px]"></i>
+                <span class="text-[8px] font-bold">偽裝</span>
+            </button>
+            <button onclick="switchTab('battery')" id="nav-battery" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-calendar text-[11px]"></i>
+                <span class="text-[8px] font-bold">日程</span>
+            </button>
+            <button onclick="switchTab('line')" id="nav-line" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-envelope-open-text text-[11px]"></i>
+                <span class="text-[8px] font-bold">假 LINE</span>
+            </button>
+            <button onclick="switchTab('game')" id="nav-game" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-gamepad text-[11px]"></i>
+                <span class="text-[8px] font-bold">遊戲</span>
+            </button>
+            <button onclick="switchTab('synergy')" id="nav-synergy" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-heart-pulse text-[11px]"></i>
+                <span class="text-[8px] font-bold">安慰</span>
+            </button>
+            <button onclick="switchTab('idol')" id="nav-idol" class="flex flex-col items-center gap-1 hover:text-zinc-200 transition-colors shrink-0">
+                <i class="fa-solid fa-star text-[11px]"></i>
+                <span class="text-[8px] font-bold">偶像</span>
+            </button>
+        </nav>
+
+        <!-- ================= 全螢幕/覆蓋用大 UI ================= -->
+
+        <!-- Windows 假更新畫面 -->
+        <div id="fake-update-overlay-win" class="hidden fixed inset-0 bg-[#0078d7] text-white z-50 flex flex-col justify-between p-12 select-none font-sans">
+            <div class="flex-grow flex flex-col items-center justify-center text-center">
+                <div class="mb-8 relative w-12 h-12">
+                    <svg class="animate-spin w-12 h-12 text-white/30" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-light mb-3">正在處理更新</h1>
+                <p class="text-base opacity-90 mb-2">已完成 <span id="update-percent-text">27</span>%</p>
+                <p class="text-xs opacity-70">請保持電腦開機並插入電源。這可能需要一些時間。</p>
+            </div>
+            <div class="text-[11px] opacity-40 text-center">
+                您的電腦將重新啟動數次 | 按下 [ESC] 結束維護模式
+            </div>
+        </div>
+
+        <!-- macOS 假更新畫面 -->
+        <div id="fake-update-overlay-mac" class="hidden fixed inset-0 bg-black text-white z-50 flex flex-col justify-between p-12 select-none font-sans">
+            <div class="flex-grow flex flex-col items-center justify-center text-center">
+                <svg class="w-16 h-16 fill-white mb-12" viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.34.13-9.14-1.92-14.38-6.16-3.29-2.69-7.14-7.28-11.55-13.79-11.24-16.73-19.11-36.81-23.59-60.27-2.62-13.57-2.73-25.26-.35-35.07 2.37-9.82 6.74-17.5 13.1-23.05 6.35-5.54 13.6-8.38 21.73-8.5 4.54 0 9.77 1.34 15.7 4 5.92 2.67 9.87 4 11.83 4 1.76 0 5.65-1.28 11.66-3.83 6.02-2.55 11.07-3.76 15.17-3.63 12.35.39 22.37 5.02 30.04 13.92-10.45 6.34-15.54 15.01-15.24 26.01.29 8.92 3.65 16.32 10.06 22.21 6.42 5.9 14.16 9.07 23.23 9.53-2.03 5.92-4.66 11.75-7.91 17.51zm-24.31-97.81c0-7.35 2.62-14.2 7.85-20.57 5.23-6.36 11.69-10.15 19.38-11.37.13.78.2 1.55.2 2.33 0 7.22-2.7 13.97-8.1 20.25-5.4 6.28-11.97 10.02-19.72 11.24-.13-.65-.19-1.29-.19-1.88z"/>
+                </svg>
+                <div class="w-64 h-1 bg-zinc-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-zinc-200 transition-all duration-1000" id="mac-progress-bar" style="width: 27%;"></div>
+                </div>
+                <p class="text-xs text-zinc-500 mt-4 font-mono">預估剩餘時間：約 <span id="mac-time-text">35</span> 分鐘</p>
+            </div>
+            <div class="text-[11px] opacity-30 text-center">
+                按下 [ESC] 結束維護模式
+            </div>
+        </div>
+
+        <!-- Windows 經典藍底白字當機畫面 (BSOD) -->
+        <div id="bsod-overlay" class="hidden fixed inset-0 bg-[#0078d7] text-white z-50 flex flex-col justify-between p-12 select-none font-mono">
+            <div class="space-y-8 max-w-4xl mx-auto my-auto">
+                <div class="text-7xl">:(</div>
+                <h1 class="text-2xl font-bold">您的電腦發生問題，因此必須重新啟動。</h1>
+                <p class="text-lg">我們剛剛正在收集某些錯誤資訊，接著我們會為您重新啟動。 (已完成 <span id="bsod-percent">0</span>%)</p>
+                
+                <div class="flex gap-8 pt-8 border-t border-white/20">
+                    <div class="w-24 h-24 bg-white flex items-center justify-center p-2 rounded shrink-0">
+                        <div class="grid grid-cols-5 gap-1 w-full h-full bg-stone-900">
+                            <div class="bg-white col-span-2 row-span-2"></div><div class="bg-stone-900"></div><div class="bg-white col-span-2"></div>
+                            <div class="bg-stone-900"></div><div class="bg-white"></div><div class="bg-stone-900"></div>
+                            <div class="bg-white col-span-2"></div><div class="bg-stone-900"></div><div class="bg-white col-span-2"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs space-y-1.5 self-center opacity-80">
+                        <p>如需詳細資訊，您稍後可以在線上搜尋此錯誤: <strong>CORE_STABILITY_ABORT_TIMEOUT</strong></p>
+                        <p>若您與 IT 人員聯繫，請提供此代碼:</p>
+                        <p>停止代碼: SOCIAL_BUFFER_OVERFLOW</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-xs opacity-50 text-center">
+                按下 [ESC] 結束當機模擬
+            </div>
+        </div>
+
+        <!-- 高擬真 iOS 全螢幕來電畫面 -->
+        <div id="fake-call-overlay" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md text-white z-50 flex flex-col justify-between py-20 px-8 select-none font-sans">
+            <!-- 聯絡人資訊 -->
+            <div class="text-center pt-10">
+                <h2 id="ios-caller-name" class="text-3xl font-light tracking-wide text-zinc-100">魔鬼老婆大人</h2>
+                <div id="call-status" class="text-zinc-400 font-medium text-sm mt-2">行動電話</div>
+            </div>
+
+            <div id="ios-call-grid" class="grid grid-cols-3 gap-y-8 gap-x-6 px-4 py-4 max-w-sm mx-auto text-center opacity-40 transition-opacity duration-300 pointer-events-none">
+                <div>
+                    <div class="w-14 h-14 rounded-full bg-white/10 mx-auto flex items-center justify-center text-xl text-white"><i class="fa-solid fa-microphone-slash"></i></div>
+                    <span class="text-[10px] text-zinc-400 mt-1.5 block">靜音</span>
+                </div>
+                <div>
+                    <div class="w-14 h-14 rounded-full bg-white/10 mx-auto flex items-center justify-center text-xl text-white"><i class="fa-solid fa-calculator"></i></div>
+                    <span class="text-[10px] text-zinc-400 mt-1.5 block">撥號鍵盤</span>
+                </div>
+                <div>
+                    <div class="w-14 h-14 rounded-full bg-white/10 mx-auto flex items-center justify-center text-xl text-white"><i class="fa-solid fa-volume-high"></i></div>
+                    <span class="text-[10px] text-zinc-400 mt-1.5 block">擴音器</span>
+                </div>
+                <div>
+                    <div class="w-14 h-14 rounded-full bg-white/10 mx-auto flex items-center justify-center text-xl text-white"><i class="fa-solid fa-plus"></i></div>
+                    <span class="text-[10px] text-zinc-400 mt-1.5 block">新增通話</span>
+                </div>
+                <div>
+                    <div class="w-14 h-14 rounded-full bg-white/10 mx-auto flex items-center justify-center text-xl text-white"><i class="fa-solid fa-video"></i></div>
+                    <span class="text-[10px] text-zinc-400 mt-1.5 block">FaceTime</span>
+                </div>
+                <div>
+                    <div class="w-14 h-14 rounded-full bg-white/10 mx-auto flex items-center justify-center text-xl text-white"><i class="fa-solid fa-address-book"></i></div>
+                    <span class="text-[10px] text-zinc-400 mt-1.5 block">聯絡人</span>
+                </div>
+            </div>
+
+            <!-- 底部按鈕 -->
+            <div class="flex justify-around items-center px-10">
+                <button onclick="endFakeCall()" class="flex flex-col items-center gap-2">
+                    <div class="w-16 h-16 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center text-white text-2xl shadow-xl transition-all active:scale-95">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </div>
+                    <span class="text-[10px] text-zinc-400">拒絕</span>
+                </button>
+                
+                <button onclick="acceptFakeCall()" id="accept-call-btn" class="flex flex-col items-center gap-2">
+                    <div class="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white text-2xl shadow-xl animate-pulse transition-all active:scale-95">
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <span class="text-[10px] text-zinc-400">接聽</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 高仿真外送地圖追蹤介面 -->
+        <div id="fake-delivery-overlay" class="hidden fixed inset-0 bg-zinc-950 text-zinc-100 z-50 flex flex-col justify-between font-sans">
+            <!-- 頂部外送狀態欄 -->
+            <div class="bg-zinc-900 border-b border-zinc-800 p-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></div>
+                        <span class="text-xs font-bold text-rose-500">外送員已送達！</span>
+                    </div>
+                    <button onclick="hideFakeDelivery()" class="text-zinc-500 hover:text-zinc-300 text-xs px-2 py-1 rounded bg-zinc-800 border border-zinc-700">
+                        關閉畫面
+                    </button>
+                </div>
+                <h3 class="text-lg font-bold mt-2">您的餐點已經放置大門口指定地點</h3>
+                <p class="text-xs text-zinc-400 mt-1">外送員：<strong>陳大明 (機車 123-ABC)</strong> 正在等候您取餐</p>
+            </div>
+
+            <!-- 地圖區域 -->
+            <div class="flex-grow bg-zinc-900 relative overflow-hidden flex items-center justify-center p-4">
+                <svg class="w-full h-full opacity-60 absolute" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0" y="0" width="400" height="400" fill="#18181b"/>
+                    <path d="M 50 0 L 50 400 M 150 0 L 150 400 M 250 0 L 250 400 M 350 0 L 350 400" stroke="#27272a" stroke-width="20" />
+                    <path d="M 0 80 L 400 80 M 0 180 L 400 180 M 0 280 L 400 280 M 0 380 L 400 380" stroke="#27272a" stroke-width="20" />
+                    <path id="delivery-route" d="M 50 380 L 50 180 L 250 180 L 250 80" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" />
+                    <circle cx="250" cy="80" r="10" fill="#f43f5e" class="animate-pulse" />
+                </svg>
+
+                <div class="absolute bg-zinc-950/90 border border-zinc-800 rounded-xl p-2 shadow-2xl flex items-center gap-2 top-[120px] left-[150px] animate-bounce">
+                    <div class="w-7 h-7 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs text-rose-500">
+                        🛵
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-zinc-500">外送員</div>
+                        <div class="text-[10px] font-bold text-zinc-200">陳大明已送達</div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-4 left-4 bg-zinc-950/80 border border-zinc-800 px-3 py-1.5 rounded-md text-[10px]">
+                    <div class="font-bold text-emerald-500">FoodDash Tracker</div>
+                    <div class="text-zinc-500 font-mono">訂單序號: #FD-9842-88</div>
+                </div>
+            </div>
+
+            <!-- 底部取餐控制按鈕 -->
+            <div class="bg-zinc-900 p-4 border-t border-zinc-800 flex gap-3">
+                <button onclick="hideFakeDelivery()" class="flex-grow bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg text-xs font-bold transition-all shadow-lg text-center">
+                    我已拿到外送 (返回)
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= 核心 JavaScript ================= -->
+    <script>
+        // --- 1. 全域變數與初始化 ---
+        const apiKey = ""; 
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'i-survival-guide-app';
+        
+        let socialEnergy = 100;
+        let todaySchedules = []; // 初始日程空白
+
+        // 假來電相關
+        let callInterval = null;
+        let callTimeout = null;
+        let audioContext = null;
+        let talkTimerInterval = null;
+
+        // 更新與系統
+        let updatePercent = 27;
+        let updateTimerInterval = null;
+        let currentSystemType = 'win';
+
+        // 偽裝模式與版面切換
+        let isStealthMode = false;
+        let isDesktopLayout = false; // 預設為手機版面
+
+        // 5 個客製化相框偶像圖片儲存陣列 (持久保存)
+        let idolImages = [null, null, null, null, null];
+
+        // 假 LINE 罐頭回覆 (經擴充、剔除意圖結束對話的客套)
+        const fakeLineCannedResponses = [
+            "原來如此~ 🤔",
+            "哇阿~好酷喔 ✨",
+            "真的假的 😲",
+            "笑死 😂",
+            "嗯嗯對啊",
+            "好好笑 😆",
+            "好喔",
+            "真假！",
+            "太狂了吧",
+            "傻眼 🙄",
+            "我也這麼覺得！",
+            "懂了懂了",
+            "哈哈哈超好笑",
+            "對啊，超扯",
+            "真的！ 👍",
+            "我也是欸",
+            "哭啊 😭",
+            "好扯喔"
+        ];
+
+        // 心靈雞湯句庫 (Rule 6)
+        const comfortQuotes = [
+            "如果今天過得很累，請閉上眼睛。這樣你就看不見繁瑣的工作，也聽不見別人的碎碎念了。",
+            "世上無難事，只要肯放棄！",
+            "努力不一定會成功，但偷懶一定會很舒服！",
+            "既然解決不了問題，那就解決提出問題的主管（用仿真來電）。",
+            "只要你今天躺得夠平，明天就沒有人能把你打倒。",
+            "社交是給有電的人玩的，我們這種太陽能的，雨天請一律關機休息。",
+            "累了嗎？這很正常，因為你剛剛在呼吸別人的尷尬氣流。"
+        ];
+
+        // 載入初始化
+        window.onload = function() {
+            updateEnergyUI();
+            renderIdolSlots(); // 初始化渲染5大相框
+            
+            // ESC 監聽
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    exitFakeUpdate();
+                    endFakeCall();
+                }
+            });
+        };
+
+        // 版面配置模式切換 (切換配置並強制清空圖片)
+        function toggleLayoutMode() {
+            const app = document.getElementById('app');
+            const layoutBtnText = document.getElementById('layout-btn-text');
+
+            if (!isDesktopLayout) {
+                app.classList.remove('app-mobile');
+                app.classList.add('app-desktop');
+                layoutBtnText.innerText = "手機版面";
+                isDesktopLayout = true;
+            } else {
+                app.classList.remove('app-desktop');
+                app.classList.add('app-mobile');
+                layoutBtnText.innerText = "電腦滿版";
+                isDesktopLayout = false;
+            }
+
+            // 若使用者切換電腦或手機模式時，需改變配置且清空圖片
+            clearIdolImages();
+        }
+
+        // 偽裝模式切換
+        function toggleStealthMode() {
+            const overlay = document.getElementById('stealth-outlook-overlay');
+            if (!isStealthMode) {
+                overlay.classList.remove('hidden');
+                isStealthMode = true;
+            } else {
+                overlay.classList.add('hidden');
+                isStealthMode = false;
+            }
+        }
+
+        // 頁面切換控制 (在切換功能後，回到偶像頁面仍完美保持圖片存在)
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('text-zinc-200');
+                btn.classList.add('text-zinc-500');
+            });
+            document.getElementById(`nav-${tabId}`).classList.add('text-zinc-200');
+            document.getElementById(`nav-${tabId}`).classList.remove('text-zinc-500');
+
+            // 如果不是遊戲 Tab 則關閉遊戲迴圈，節省效能
+            if (tabId !== 'game') {
+                stopSpaceShooter();
+            } else {
+                if (!isGamePlaying) {
+                    document.getElementById('game-over-overlay').classList.remove('hidden');
+                }
+            }
+        }
+
+        // --- 2. 尬聊話題產生器 (無靈魂棒讀 / 物理脫逃導向 - 修正後風格 - Rule 2) ---
+        const scenarioTopics = {
+            elevator: [
+                { text: "「主管早。我剛想起我今天早上不小心搭錯樓梯...不對，是忘記在一樓警衛室拿快遞了，我先下去拿一下。」(平靜客套)", tip: "物理性閃人：說完等電梯門一開，自然而然地踏出去，動作乾脆流暢。" },
+                { text: "「主管早。我肚子突然有點不舒服，去一下洗手間，您先忙。」(神色無奈)", tip: "肚子不舒服是無敵的生理卡。講完可以順理成章走往洗手間方向避難。" },
+                { text: "「主管早。我昨晚落枕有點嚴重，正準備回座位貼個貼布，抱歉喔。」(死魚眼客套)", tip: "平靜地微笑，用「身體微恙」來作為低阻力的客套，隨即快速回到位子上。" }
+            ],
+            reunion: [
+                { text: "「好久不見！你現在變好多喔，真優秀。對了，我突然想起公司那邊還有一個急件要回覆，我先去外面打個電話，改天再聊。」(禮貌客套)", tip: "公事急件：這在社會化環境中再正常不過。拿起手機直接往門口大步走去。" },
+                { text: "「好久不見。這間餐廳的冷氣好像吹得我有點頭痛，我先去外面呼吸一下新鮮空氣。」(面色疲倦)", tip: "生理避難卡。對大家客氣點頭致意後，順理成章起立滑出門外。" }
+            ],
+            relative: [
+                { text: "「阿姨好。目前工作還過得去，有消息會跟您說的。對了，我朋友突然打電話來找我有急事，我先去客房接個電話。」(語速平緩)", tip: "用「接緊急電話」為由。鎖上客房的門，在裡面安安靜靜地滑手機避難。" },
+                { text: "「舅舅好，聽說今天晚上廚房那邊洗碗的人手不夠，我去廚房幫忙幫忙。」(誠懇無奈)", tip: "主動去廚房洗碗是最安全的避風港，一邊刷碗一邊放空，誰也沒法對你說教。" }
+            ],
+            haircut: [
+                { text: "「稍微修剪短一點就好。因為昨晚沒睡飽頭有點痛，洗頭時我想稍微閉眼休息一下，謝謝您。」(客氣平淡)", tip: "明示累了。隨後閉上雙眼。理髮師會安靜地配合你的要求，絕不打擾。" },
+                { text: "「長度修一下就行。我戴上耳機聽個工作用的音檔，您直接剪就好，辛苦了。」(正常有禮貌)", tip: "戴上降噪耳機。這是現代最自然也最具防禦力的安寧社交屏障。" }
+            ]
+        };
+
+        function generateTopic(scenario) {
+            const list = scenarioTopics[scenario];
+            if (!list) return;
+            const randomIndex = Math.floor(Math.random() * list.length);
+            const selected = list[randomIndex];
+
+            const titleMap = {
+                elevator: '🏢 電梯遇主管',
+                reunion: '🎓 同學重聚場合',
+                relative: '🧧 家族聚會大問候',
+                haircut: '💇 造型沙龍現場'
+            };
+
+            document.getElementById('topic-scene-title').innerText = titleMap[scenario] || "撤退決策";
+            document.getElementById('topic-text').innerText = selected.text;
+            document.getElementById('topic-tip').innerText = selected.tip;
+            document.getElementById('topic-result-box').classList.remove('hidden');
+        }
+
+        // AI 智慧決策
+        async function generateAITopic() {
+            const input = document.getElementById('ai-scenario-input').value.trim();
+            if (!input) return;
+
+            const box = document.getElementById('topic-result-box');
+            const sceneTitle = document.getElementById('topic-scene-title');
+            const topicText = document.getElementById('topic-text');
+            const topicTip = document.getElementById('topic-tip');
+
+            sceneTitle.innerText = `🔮 AI 智能撤退決策: ${input}`;
+            topicText.innerText = "正在分析社交重力，計算最低摩擦逃生句點中...";
+            topicTip.innerText = "分析物理撤退方向中...";
+            box.classList.remove('hidden');
+
+            const systemPrompt = "你是一位極度冷酷、追求零社交、極簡的「內向求生(I人)決策大師」。請針對使用者輸入的尷尬社交場景，生成一句「聽起來很自然、平淡客套、但可以最快速結束話題逃跑」的正常台詞（限50字內，切勿使用中二病或太怪異的詞彙，聽起來要合常理），並附帶一個調侃或實用的「💡 物理撤退動作」 (限40字內)。輸出格式必須為裝飾合規的 JSON 格式: {\"topic\": \"台詞\", \"tip\": \"撤退動作\"}";
+            const userQuery = `場景：${input}`;
+
+            async function fetchAIGeneration(retries = 5, delay = 1000) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                topic: { type: "STRING" },
+                                tip: { type: "STRING" }
+                            },
+                            required: ["topic", "tip"]
+                        }
+                    }
+                };
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error("HTTP " + response.status);
+                    const data = await response.json();
+                    return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+                } catch (error) {
+                    if (retries > 0) {
+                        await new Promise(res => setTimeout(res, delay));
+                        return fetchAIGeneration(retries - 1, delay * 2);
+                    }
+                    throw error;
+                }
+            }
+
+            try {
+                const result = await fetchAIGeneration();
+                topicText.innerText = result.topic;
+                topicTip.innerText = result.tip;
+            } catch (error) {
+                topicText.innerText = `「我突然想起等一下還有一個重要的線上會議，先不打擾了，我先回去準備。」(自然客套)`;
+                topicTip.innerText = `拿起手機稍微看一下螢幕，神色凝重地快步離開。`;
+            }
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            const originalText = document.getElementById(elementId).innerText;
+            document.getElementById(elementId).innerText = "✅ 台詞已安全複製，可以伺機使用！";
+            setTimeout(() => {
+                document.getElementById(elementId).innerText = originalText;
+            }, 1200);
+        }
+
+        // --- 3. 脫身藉口製造機 ---
+        function scheduleFakeCall() {
+            const callerName = document.getElementById('fake-caller-name').value.trim() || "主管王經理 (急件)";
+            const delay = parseInt(document.getElementById('fake-call-delay').value);
+
+            document.getElementById('ios-caller-name').innerText = callerName;
+            
+            clearInterval(callTimeout);
+            clearInterval(callInterval);
+
+            const overlay = document.getElementById('fake-call-overlay');
+            const status = document.getElementById('call-status');
+            const acceptBtn = document.getElementById('accept-call-btn');
+
+            acceptBtn.classList.remove('hidden');
+            document.getElementById('ios-call-grid').classList.add('opacity-40', 'pointer-events-none');
+            
+            status.innerText = "預約系統啟動中...";
+
+            callTimeout = setTimeout(() => {
+                startRinging();
+            }, delay * 1000);
+        }
+
+        function startRinging() {
+            const overlay = document.getElementById('fake-call-overlay');
+            const status = document.getElementById('call-status');
+            overlay.classList.remove('hidden');
+            status.innerText = "行動電話";
+
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                callInterval = setInterval(() => {
+                    playRingTone();
+                    if (navigator.vibrate) {
+                        navigator.vibrate([600, 400, 600]);
+                    }
+                }, 2500);
+            } catch (e) {}
+        }
+
+        function playRingTone() {
+            if (!audioContext) return;
+            try {
+                let osc1 = audioContext.createOscillator();
+                let osc2 = audioContext.createOscillator();
+                let gain = audioContext.createGain();
+                
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(440, audioContext.currentTime);
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(480, audioContext.currentTime);
+
+                gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.8);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc1.start();
+                osc2.start();
+                osc1.stop(audioContext.currentTime + 1.8);
+                osc2.stop(audioContext.currentTime + 1.8);
+            } catch (e) {}
+        }
+
+        // 完美掛斷：完全停止，隱藏來電介面
+        function endFakeCall() {
+            clearInterval(callTimeout);
+            clearInterval(callInterval);
+            clearInterval(talkTimerInterval);
+            
+            if (audioContext) {
+                audioContext.close().catch(() => {});
+                audioContext = null;
+            }
+            document.getElementById('fake-call-overlay').classList.add('hidden');
+        }
+
+        // 接聽來電
+        function acceptFakeCall() {
+            clearInterval(callInterval);
+            const status = document.getElementById('call-status');
+            const acceptBtn = document.getElementById('accept-call-btn');
+            const callGrid = document.getElementById('ios-call-grid');
+
+            status.innerText = "00:00";
+            acceptBtn.classList.add('hidden'); 
+            callGrid.classList.remove('opacity-40', 'pointer-events-none'); 
+
+            let seconds = 0;
+            talkTimerInterval = setInterval(() => {
+                seconds++;
+                let min = String(Math.floor(seconds / 60)).padStart(2, '0');
+                let sec = String(seconds % 60).padStart(2, '0');
+                status.innerText = `${min}:${sec}`;
+            }, 1000);
+
+            try {
+                const text = "你等一下到底要不要回來？到底在忙什麼？現在立刻出發，再拖就完蛋了，聽到沒有！";
+                const synth = window.speechSynthesis;
+                if (synth) {
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.rate = 1.1;
+                    utter.pitch = 0.95;
+                    synth.speak(utter);
+                }
+            } catch (e) {}
+        }
+
+        function triggerFakeDelivery() {
+            const overlay = document.getElementById('fake-delivery-overlay');
+            overlay.classList.remove('hidden');
+        }
+
+        function hideFakeDelivery() {
+            document.getElementById('fake-delivery-overlay').classList.add('hidden');
+        }
+
+        // --- 4. 工作偷懶用 (Windows / macOS) ---
+        function setSystemType(type) {
+            currentSystemType = type;
+            document.querySelectorAll('.sys-type-btn').forEach(btn => {
+                btn.className = 'sys-type-btn border border-zinc-800 bg-zinc-950 text-xs py-2 rounded font-bold text-zinc-400';
+            });
+
+            if (type === 'win') {
+                document.getElementById('sys-win-btn').className = 'sys-type-btn border-2 border-zinc-100 bg-zinc-950 text-xs py-2 rounded font-bold text-zinc-100';
+            } else {
+                document.getElementById('sys-mac-btn').className = 'sys-type-btn border-2 border-zinc-100 bg-zinc-950 text-xs py-2 rounded font-bold text-zinc-100';
+            }
+        }
+
+        function startFakeUpdate() {
+            const timerSelect = document.getElementById('update-timer');
+            let duration = parseInt(timerSelect.value);
+
+            const appContainer = document.getElementById('app');
+            if (appContainer.requestFullscreen) {
+                appContainer.requestFullscreen().catch(() => {});
+            }
+
+            updatePercent = 27;
+
+            if (currentSystemType === 'win') {
+                const overlay = document.getElementById('fake-update-overlay-win');
+                const percentText = document.getElementById('update-percent-text');
+                overlay.classList.remove('hidden');
+                percentText.innerText = updatePercent;
+
+                let elapsed = 0;
+                updateTimerInterval = setInterval(() => {
+                    elapsed += 5;
+                    if (elapsed >= duration) {
+                        clearInterval(updateTimerInterval);
+                        triggerBSOD();
+                    } else {
+                        if (Math.random() > 0.85 && updatePercent < 99) {
+                            updatePercent++;
+                            percentText.innerText = updatePercent;
+                        }
+                    }
+                }, 5000);
+            } else {
+                const overlay = document.getElementById('fake-update-overlay-mac');
+                const progressBar = document.getElementById('mac-progress-bar');
+                const timeText = document.getElementById('mac-time-text');
+                overlay.classList.remove('hidden');
+                progressBar.style.width = '27%';
+
+                let elapsed = 0;
+                let estMinutes = Math.ceil(duration / 60);
+                timeText.innerText = estMinutes;
+
+                updateTimerInterval = setInterval(() => {
+                    elapsed += 5;
+                    let progress = 27 + (elapsed / duration) * 72;
+                    progressBar.style.width = `${progress}%`;
+
+                    let leftMinutes = Math.ceil((duration - elapsed) / 60);
+                    timeText.innerText = leftMinutes > 0 ? leftMinutes : 1;
+
+                    if (elapsed >= duration) {
+                        clearInterval(updateTimerInterval);
+                        exitFakeUpdate(); 
+                    }
+                }, 5000);
+            }
+        }
+
+        function triggerBSOD() {
+            document.getElementById('fake-update-overlay-win').classList.add('hidden');
+            const bsod = document.getElementById('bsod-overlay');
+            bsod.classList.remove('hidden');
+
+            let bsodPercent = 0;
+            const bsodText = document.getElementById('bsod-percent');
+            const bsodInterval = setInterval(() => {
+                if (bsodPercent < 100) {
+                    bsodPercent += Math.floor(Math.random() * 10) + 5;
+                    if (bsodPercent > 100) bsodPercent = 100;
+                    bsodText.innerText = bsodPercent;
+                } else {
+                    clearInterval(bsodInterval);
+                }
+            }, 3000);
+        }
+
+        function exitFakeUpdate() {
+            clearInterval(updateTimerInterval);
+            document.getElementById('fake-update-overlay-win').classList.add('hidden');
+            document.getElementById('fake-update-overlay-mac').classList.add('hidden');
+            document.getElementById('bsod-overlay').classList.add('hidden');
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // --- 5. 今日能耗行事曆 (智慧能耗排程 - 針對高中與大學生群體優化 - Rule 4) ---
+        function loadDefaultSchedules() {
+            todaySchedules = [
+                { id: 1, time: "09:00", desc: "回宿舍躺平滑手機 🏡", score: 15, reason: "💡 學生能耗：獲得放鬆因子。在宿舍躺平、滑 Threads、追劇，能耗逐漸修復。" },
+                { id: 2, time: "11:30", desc: "跟教授 meeting 回報專案進度 👔", score: -25, reason: "💡 學生能耗：警告！偵測到高消耗源。面對教授的靈魂拷問，能耗面臨斷崖式下挫。" },
+                { id: 3, time: "14:00", desc: "通識課堂上安全補眠 🤫", score: 10, reason: "💡 學生能耗：短暫實施課堂補眠保護，修復受損的精神突觸。" },
+                { id: 4, time: "18:30", desc: "分組報告討論遇到雷隊友 👥", score: -35, reason: "💡 學生能耗：分組報告是大學生最大的精神劫難。與搭便車的組員溝通，電量瞬間暴跌。" }
+            ];
+            renderScheduleTimeline();
+            recalculateTotalEnergy();
+        }
+
+        async function addScheduleItem() {
+            const timeVal = document.getElementById('schedule-time').value.trim();
+            const descVal = document.getElementById('schedule-desc').value.trim();
+
+            if (!descVal) return;
+
+            const newItemId = Date.now();
+            let estimatedScore = 0;
+            let reasoning = "💡 行事曆評估：常規日常事務能耗。";
+
+            // 高中大學生高敏感關鍵字判定
+            const positiveKeywords = ["🏡", "🛌", "🐱", "🧘", "🎮", "☕", "獨處", "睡", "摸貓", "貓", "動漫", "追劇", "在家", "課堂補眠", "下課", "放學", "歐趴", "躺平", "沒去上課"];
+            const negativeKeywords = ["上台", "發表", "報告", "開會", "分組", "期中", "期末", "社團", "暗戀", "表白", "早八", "點名", "教授", "導師", "宿營", "直屬", "迎新", "考試", "見家長"];
+
+            let hasMatched = false;
+            
+            // 針對高中大學生常見高能耗事件做精確判定
+            if (descVal.includes("上台") || descVal.includes("發表") || descVal.includes("報告") || descVal.includes("分組")) {
+                estimatedScore = -35;
+                reasoning = `💡 學生能耗：分組報告或上台發表是大學生最大的精神劫難。在全班跟教授注視下棒讀，電量瞬間暴跌。`;
+                hasMatched = true;
+            } else if (descVal.includes("早八") || descVal.includes("點名")) {
+                estimatedScore = -15;
+                reasoning = `💡 學生能耗：早八點名是反人類的設定。為了學分強行開機，電量微幅滲漏。`;
+                hasMatched = true;
+            } else if (descVal.includes("社團") || descVal.includes("迎新") || descVal.includes("宿營")) {
+                estimatedScore = -25;
+                reasoning = `💡 學生能耗：被迫參加團體凝聚活動，大量社交寒暄正在榨乾你的保護層。`;
+                hasMatched = true;
+            } else if (descVal.includes("期中") || descVal.includes("期末") || descVal.includes("考試") || descVal.includes("學測")) {
+                estimatedScore = -30;
+                reasoning = `💡 學生能耗：考試周的精神壓迫，伴隨著被同學問「你讀完了沒」的二度能耗。`;
+                hasMatched = true;
+            } else if (descVal.includes("暗戀") || descVal.includes("表白") || descVal.includes("學長") || descVal.includes("學姐") || descVal.includes("學妹") || descVal.includes("學弟")) {
+                estimatedScore = -40;
+                reasoning = `💡 學生能耗：與心儀或高壓力對象互動，心跳過速導致能耗防護罩直接過載紅區！`;
+                hasMatched = true;
+            } else {
+                for (let kw of positiveKeywords) {
+                    if (descVal.includes(kw)) {
+                        estimatedScore = 15;
+                        reasoning = `💡 學生能耗：獲得放鬆因子 [${kw}]，在宿舍躺平、滑 Threads、追劇，能耗逐漸修復。`;
+                        hasMatched = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasMatched) {
+                // 通用消耗判定
+                for (let kw of negativeKeywords) {
+                    if (descVal.includes(kw)) {
+                        estimatedScore = -25;
+                        reasoning = `💡 學生能耗：偵測到校園生活高能耗因子 [${kw}]，能耗面臨大幅下挫。`;
+                        hasMatched = true;
+                        break;
+                    }
+                }
+            }
+
+            // 調用 AI 進行深度毒舌診斷 (若串接 API)
+            if (apiKey) {
+                try {
+                    const systemPrompt = "你是一位冷酷、極簡且帶點毒舌幽默的「高中與大學生群體專屬社交能耗分析器」。請分析學生輸入的今日日程，判斷此日程對內向學生的社交能量影響（社交消耗、上台報告、早八點名、雷隊友、期中考、跟暗戀或高壓對象說話都算大扣分；在宿舍躺平滑脆、下課放空、擼貓擼狗算加分，範圍在 -40 到 +40 之間）。請只回傳 JSON 格式，包含: {\"score\": 數字, \"reason\": \"一句從高中/大學生視角冷冷地吐槽或點出為什麼加減此分之毒舌解析\"}";
+                    const userQuery = `日程：${descVal}`;
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    score: { type: "INTEGER" },
+                                    reason: { type: "STRING" }
+                                },
+                                required: ["score", "reason"]
+                            }
+                        }
+                    };
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const aiResult = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+                        estimatedScore = aiResult.score;
+                        reasoning = `💡 AI 智慧診斷：${aiResult.reason}`;
+                    }
+                } catch (e) {
+                    console.error("AI 評量失敗，採用快篩結果", e);
+                }
+            }
+
+            // 寫入行程
+            todaySchedules.push({
+                id: newItemId,
+                time: timeVal,
+                desc: descVal,
+                score: estimatedScore,
+                reason: reasoning
+            });
+
+            todaySchedules.sort((a, b) => a.time.localeCompare(b.time));
+
+            document.getElementById('schedule-desc').value = "";
+            renderScheduleTimeline();
+            recalculateTotalEnergy();
+        }
+
+        function removeScheduleItem(id) {
+            todaySchedules = todaySchedules.filter(item => item.id !== id);
+            renderScheduleTimeline();
+            recalculateTotalEnergy();
+        }
+
+        function renderScheduleTimeline() {
+            const container = document.getElementById('calendar-timeline');
+            if (todaySchedules.length === 0) {
+                container.innerHTML = `<p class="text-zinc-600 italic text-xs text-center py-6">今日尚無日程規劃。請在上方輸入今天要做的事情。</p>`;
+                return;
+            }
+
+            container.innerHTML = todaySchedules.map(item => {
+                const badgeColor = item.score >= 0 ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900' : 'bg-red-950/40 text-red-400 border-red-900';
+                return `
+                    <div class="p-3 bg-zinc-950/40 border border-zinc-800 rounded-lg relative space-y-1.5 hover:border-zinc-700 transition-all">
+                        <button onclick="removeScheduleItem(${item.id})" class="absolute top-2 right-2 text-zinc-600 hover:text-red-400 text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">${item.time}</span>
+                            <span class="text-xs font-bold text-zinc-200 flex-grow pr-4 text-left">${item.desc}</span>
+                            <span class="text-[10px] font-mono font-bold border px-1.5 py-0.5 rounded shrink-0 ${badgeColor}">
+                                ${item.score >= 0 ? '+' : ''}${item.score}%
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-zinc-500 italic leading-relaxed text-left">${item.reason}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function recalculateTotalEnergy() {
+            let netImpact = 0;
+            todaySchedules.forEach(item => {
+                netImpact += item.score;
+            });
+
+            socialEnergy = 100 + netImpact;
+            if (socialEnergy > 100) socialEnergy = 100;
+            if (socialEnergy < 0) socialEnergy = 0;
+
+            updateEnergyUI();
+
+            const summaryPill = document.getElementById('calendar-summary-pill');
+            const summarySuggestion = document.getElementById('calendar-summary-suggestion');
+
+            summaryPill.innerText = `${netImpact >= 0 ? '+' : ''}${netImpact}%`;
+            if (netImpact >= 0) {
+                summaryPill.className = "px-2.5 py-1 rounded font-bold bg-emerald-950 text-emerald-400 border border-emerald-900";
+                summarySuggestion.innerText = "🍃 評估報告：今日日程對精神消耗影響良性，您在安全綠區。晚上可以安穩躲回宿舍滑 Threads。";
+            } else if (netImpact > -30) {
+                summaryPill.className = "px-2.5 py-1 rounded font-bold bg-amber-950 text-amber-400 border border-amber-900";
+                summarySuggestion.innerText = "⚠️ 評估報告：社交能量儲存正在穩步漏電。下課期間建議塞著耳機裝睡以避開無謂閒聊。";
+            } else {
+                summaryPill.className = "px-2.5 py-1 rounded font-bold bg-red-950 text-red-400 border border-red-900 animate-pulse";
+                summarySuggestion.innerText = "🚨 嚴重預警：今日日程是徹頭徹尾的精神屠宰場！建議啟動「維護裝病全螢幕」或「預約仿真來電」逃離教室！";
+            }
+        }
+
+        function updateEnergyUI() {
+            const fill = document.getElementById('battery-fill');
+            const text = document.getElementById('battery-text');
+            const headerBattery = document.getElementById('header-battery');
+            const statusMsg = document.getElementById('battery-status-msg');
+
+            if (fill) fill.style.width = `${socialEnergy}%`;
+            if (text) text.innerText = `${socialEnergy}%`;
+            if (headerBattery) headerBattery.innerText = `${socialEnergy}%`;
+
+            if (socialEnergy > 60) {
+                if (fill) fill.className = "h-full rounded-lg transition-all duration-500 bg-gradient-to-r from-emerald-600 to-emerald-400";
+                if (headerBattery) headerBattery.className = "text-[10px] font-mono font-bold text-emerald-500";
+                if (statusMsg) statusMsg.innerText = "🟢 正常運作：當前社交緩衝充足。";
+                if (statusMsg) statusMsg.className = "text-xs text-emerald-500 mt-2 font-bold tracking-wide";
+            } else if (socialEnergy > 20) {
+                if (fill) fill.className = "h-full rounded-lg transition-all duration-500 bg-gradient-to-r from-amber-600 to-amber-400";
+                if (headerBattery) headerBattery.className = "text-[10px] font-mono font-bold text-amber-500";
+                if (statusMsg) statusMsg.innerText = "🟡 警戒模式：儲能低於一半，建議減少支出。";
+                if (statusMsg) statusMsg.className = "text-xs text-amber-500 mt-2 font-bold tracking-wide";
+            } else {
+                if (fill) fill.className = "h-full rounded-lg transition-all duration-500 bg-gradient-to-r from-red-700 to-red-500";
+                if (headerBattery) headerBattery.className = "text-[10px] font-mono font-bold text-red-500 animate-pulse";
+                if (statusMsg) statusMsg.innerText = "🚨 崩解警告：社交儲能過低，必須立即撤退！";
+                if (statusMsg) statusMsg.className = "text-xs text-red-500 mt-2 font-bold tracking-wide animate-pulse";
+            }
+        }
+
+        // --- 6. 假 LINE 聊天室功能 (標準灰色剪影頭貼 ＋ 預設魔鬼老婆大人) ---
+        function editContactName() {
+            const current = document.getElementById('chat-contact-name').innerText;
+            const next = prompt("自訂對話好友名稱：", current);
+            if (next && next.trim()) {
+                document.getElementById('chat-contact-name').innerText = next.trim();
+                document.getElementById('chat-contact-label').innerText = next.trim();
+            }
+        }
+
+        function sendFakeMessage(event) {
+            event.preventDefault();
+            const input = document.getElementById('line-input-msg');
+            const chatBox = document.getElementById('chat-messages');
+            const typingIndicator = document.getElementById('typing-indicator');
+            const userMsg = input.value.trim();
+
+            if (!userMsg) return;
+
+            // 用戶訊息送出
+            const userTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const userHtml = `
+                <div class="flex gap-2 justify-end items-end">
+                    <span class="text-[8px] text-zinc-600">已讀 ${userTime}</span>
+                    <div class="bg-zinc-800 text-zinc-200 p-2.5 rounded-lg rounded-tr-none border border-zinc-700 max-w-[200px] leading-relaxed font-medium text-left">
+                        ${userMsg}
+                    </div>
+                </div>
+            `;
+            chatBox.insertAdjacentHTML('beforeend', userHtml);
+            input.value = ""; 
+            scrollChatToBottom();
+
+            // 輸入中...
+            setTimeout(() => {
+                typingIndicator.classList.remove('hidden');
+                scrollChatToBottom();
+            }, 300);
+
+            // 罐頭回覆
+            setTimeout(() => {
+                typingIndicator.classList.add('hidden');
+                const replyText = fakeLineCannedResponses[Math.floor(Math.random() * fakeLineCannedResponses.length)];
+                const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const contactName = document.getElementById('chat-contact-name').innerText;
+                const botHtml = `
+                    <div class="flex gap-2 items-start">
+                        <div class="w-7 h-7 rounded-full overflow-hidden border border-zinc-700 shrink-0 bg-zinc-800">
+                            <svg viewBox="0 0 100 100" class="w-full h-full object-cover">
+                                <circle cx="50" cy="50" r="50" fill="#3f3f46"/>
+                                <circle cx="50" cy="40" r="18" fill="#a1a1aa"/>
+                                <path d="M20 80 C20 62, 30 58, 50 58 C70 58, 80 62, 80 80 Z" fill="#a1a1aa"/>
+                            </svg>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="text-[9px] text-zinc-500 font-bold" id="chat-contact-label">${contactName}</div>
+                            <div class="bg-zinc-900 text-zinc-200 p-2.5 rounded-lg rounded-tl-none border border-zinc-800 max-w-[200px] leading-relaxed font-medium text-left">
+                                ${replyText}
+                            </div>
+                        </div>
+                        <span class="text-[8px] text-zinc-600 self-end">${botTime}</span>
+                    </div>
+                `;
+                chatBox.insertAdjacentHTML('beforeend', botHtml);
+                scrollChatToBottom();
+                
+                // 震動
+                if (navigator.vibrate) {
+                    navigator.vibrate([100]);
+                }
+                playSynthBeep(600, 0.1);
+            }, 1200);
+        }
+
+        function scrollChatToBottom() {
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- 7. 紅白機 8-Bit 像素太空飛機大戰遊戲 (NES Space Shooter) ---
+        let gameCanvas = null;
+        let ctx = null;
+        let isGamePlaying = false;
+        let gameLoopId = null;
+        
+        // 遊戲狀態與屬性
+        let player = { x: 0, y: 0, w: 24, h: 24, speed: 5 };
+        let bullets = [];
+        let enemies = [];
+        let stars = [];
+        let items = []; // 升級晶片
+        let score = 0;
+        let playerHP = 100;
+        let weaponLevel = 1; // 1: Single, 2: Dual-Laser
+
+        const enemyThreats = ["聚餐 🍻", "會議 👔", "主管 🏢", "報告 📁", "拜年 🧧", "搭話 😱", "團建 👥"];
+
+        function initSpaceShooter() {
+            document.getElementById('game-over-overlay').classList.add('hidden');
+            gameCanvas = document.getElementById('gameCanvas');
+            ctx = gameCanvas.getContext('2d');
+            
+            // 設定 Canvas 解析度（相容容器尺寸）
+            gameCanvas.width = gameCanvas.offsetWidth;
+            gameCanvas.height = gameCanvas.offsetHeight;
+
+            player.x = gameCanvas.width / 2;
+            player.y = gameCanvas.height - 40;
+
+            bullets = [];
+            enemies = [];
+            items = [];
+            score = 0;
+            playerHP = 100;
+            weaponLevel = 1;
+
+            document.getElementById('retro-score').innerText = "000";
+            updateGameUI();
+
+            // 初始化背景星空
+            stars = [];
+            for (let i = 0; i < 45; i++) {
+                stars.push({
+                    x: Math.random() * gameCanvas.width,
+                    y: Math.random() * gameCanvas.height,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 2.5 + 0.5
+                });
+            }
+
+            isGamePlaying = true;
+            
+            // 綁定行動端拖曳/點擊操作
+            gameCanvas.removeEventListener('mousemove', handlePointerMove);
+            gameCanvas.removeEventListener('touchmove', handlePointerMove);
+            gameCanvas.addEventListener('mousemove', handlePointerMove);
+            gameCanvas.addEventListener('touchmove', handlePointerMove, { passive: true });
+
+            // 鍵盤監聽
+            window.removeEventListener('keydown', handleGameKeyDown);
+            window.addEventListener('keydown', handleGameKeyDown);
+
+            // 啟動主迴圈
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+            gameLoop();
+        }
+
+        function updateGameUI() {
+            const hpBar = document.getElementById('game-hp-bar');
+            const weaponText = document.getElementById('game-weapon-level');
+
+            if (hpBar) {
+                hpBar.style.width = `${playerHP}%`;
+                if (playerHP > 50) {
+                    hpBar.className = "h-full bg-emerald-500 transition-all duration-150";
+                } else if (playerHP > 20) {
+                    hpBar.className = "h-full bg-amber-500 transition-all duration-150";
+                } else {
+                    hpBar.className = "h-full bg-red-600 transition-all duration-150";
+                }
+            }
+            if (weaponText) {
+                if (weaponLevel === 1) {
+                    weaponText.innerText = "LV.1 SINGLE";
+                    weaponText.className = "text-zinc-400 font-bold";
+                } else {
+                    weaponText.innerText = "LV.2 DUAL-LASER";
+                    weaponText.className = "text-cyan-400 font-bold animate-pulse";
+                }
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!isGamePlaying) return;
+            const rect = gameCanvas.getBoundingClientRect();
+            let clientX;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+            } else {
+                clientX = e.clientX;
+            }
+            player.x = (clientX - rect.left) * (gameCanvas.width / rect.width);
+            
+            // 隨機自動發射
+            if (Math.random() < 0.16) {
+                fireBullet();
+            }
+        }
+
+        function handleGameKeyDown(e) {
+            if (!isGamePlaying) return;
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+                player.x = Math.max(15, player.x - 20);
+            }
+            if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
+                player.x = Math.min(gameCanvas.width - 15, player.x + 20);
+            }
+            if (e.key === ' ' || e.key === 'w' || e.key === 'ArrowUp') {
+                fireBullet();
+                e.preventDefault();
+            }
+        }
+
+        function fireBullet() {
+            if (weaponLevel === 1) {
+                bullets.push({ x: player.x, y: player.y - 12, speed: 6, r: 2.5 });
+            } else {
+                // 雙發散彈
+                bullets.push({ x: player.x - 6, y: player.y - 10, speed: 6, r: 2.5 });
+                bullets.push({ x: player.x + 6, y: player.y - 10, speed: 6, r: 2.5 });
+            }
+            playSynthBeep(900 + (weaponLevel * 100), 0.05); // 發射音
+        }
+
+        function stopSpaceShooter() {
+            isGamePlaying = false;
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+            window.removeEventListener('keydown', handleGameKeyDown);
+        }
+
+        // 像素飛機繪製輔助方法
+        function drawPixelPlayer(ctx, x, y) {
+            // NES 經典 8-Bit 像素飛機結構
+            ctx.fillStyle = "#10b981"; // 主體
+            ctx.fillRect(x - 2, y - 14, 4, 6);
+            ctx.fillRect(x - 6, y - 8, 12, 6);
+            ctx.fillRect(x - 12, y - 2, 24, 6);
+            ctx.fillRect(x - 8, y + 4, 16, 4);
+
+            ctx.fillStyle = "#34d399"; // 機翼裝飾
+            ctx.fillRect(x - 12, y + 2, 4, 4);
+            ctx.fillRect(x + 8, y + 2, 4, 4);
+
+            ctx.fillStyle = "#f43f5e"; // 噴射火焰
+            if (Math.random() > 0.5) {
+                ctx.fillRect(x - 3, y + 8, 2, 4);
+                ctx.fillRect(x + 1, y + 8, 2, 4);
+            }
+        }
+
+        // 像素敵人繪製
+        function drawPixelEnemy(ctx, x, y, w, h) {
+            ctx.fillStyle = "#1e1b4b"; // 敵艦底色
+            ctx.fillRect(x - w/2, y - h/2, w, h);
+
+            // 像素斑駁邊框
+            ctx.fillStyle = "#f43f5e";
+            ctx.fillRect(x - w/2, y - h/2, 2, h);
+            ctx.fillRect(x + w/2 - 2, y - h/2, 2, h);
+            ctx.fillRect(x - w/2, y - h/2, w, 2);
+            ctx.fillRect(x - w/2, y + h/2 - 2, w, 2);
+        }
+
+        function gameLoop() {
+            if (!isGamePlaying) return;
+
+            // 1. 清空畫布
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+            // 2. 渲染背景星空
+            ctx.fillStyle = "#ffffff";
+            stars.forEach(s => {
+                s.y += s.speed;
+                if (s.y > gameCanvas.height) {
+                    s.y = 0;
+                    s.x = Math.random() * gameCanvas.width;
+                }
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            });
+
+            // 3. 渲染主角（經典 8-Bit 像素飛機）
+            drawPixelPlayer(ctx, player.x, player.y);
+
+            // 4. 移動並渲染子彈
+            ctx.fillStyle = "#f43f5e";
+            bullets.forEach((b, index) => {
+                b.y -= b.speed;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (b.y < 0) {
+                    bullets.splice(index, 1);
+                }
+            });
+
+            // 5. 隨機掉落升級晶片
+            items.forEach((item, itemIdx) => {
+                item.y += 1.5;
+                // 繪製閃爍升級晶片
+                ctx.fillStyle = Math.random() > 0.5 ? "#22d3ee" : "#3b82f6";
+                ctx.fillRect(item.x - 5, item.y - 5, 10, 10);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "8px monospace";
+                ctx.fillText("P", item.x - 2, item.y + 3);
+
+                // 主角吃到晶片
+                const distToPlayer = Math.hypot(item.x - player.x, item.y - player.y);
+                if (distToPlayer < 18) {
+                    items.splice(itemIdx, 1);
+                    weaponLevel = 2; // 升級為 DUAL-LASER
+                    updateGameUI();
+                    playSynthBeep(1200, 0.3); // 拾取升級聲
+                }
+
+                if (item.y > gameCanvas.height + 10) {
+                    items.splice(itemIdx, 1);
+                }
+            });
+
+            // 6. 生成並渲染社交障礙物 (威脅隨分數自動提高難度)
+            const difficultyMultiplier = 1 + Math.min(3, score / 150); // 隨分數加速
+            if (Math.random() < 0.035 && enemies.length < 7) {
+                enemies.push({
+                    x: Math.random() * (gameCanvas.width - 50) + 25,
+                    y: -20,
+                    text: enemyThreats[Math.floor(Math.random() * enemyThreats.length)],
+                    speed: (1 + Math.random() * 1.5) * difficultyMultiplier,
+                    w: 52,
+                    h: 16
+                });
+            }
+
+            enemies.forEach((e, eIndex) => {
+                e.y += e.speed;
+
+                // 繪製 8-Bit 像素底盤
+                drawPixelEnemy(ctx, e.x, e.y, e.w, e.h);
+
+                // 文字
+                ctx.fillStyle = "#f43f5e";
+                ctx.font = "8px 'Courier Prime', monospace";
+                ctx.textAlign = "center";
+                ctx.fillText(e.text, e.x, e.y + 3);
+
+                // 判定主角撞擊（減少 HP 防禦值，難度更高）
+                const distToEnemy = Math.hypot(e.x - player.x, e.y - player.y);
+                if (distToEnemy < 18) {
+                    enemies.splice(eIndex, 1);
+                    playerHP = Math.max(0, playerHP - 25);
+                    updateGameUI();
+                    playSynthBeep(120, 0.4); // 撞擊聲
+                    
+                    if (playerHP <= 0) {
+                        gameOver();
+                    }
+                }
+
+                // 子彈與敵機碰撞
+                bullets.forEach((b, bIndex) => {
+                    if (Math.abs(b.x - e.x) < e.w/2 && Math.abs(b.y - e.y) < e.h/2) {
+                        enemies.splice(eIndex, 1);
+                        bullets.splice(bIndex, 1);
+                        score += 10;
+                        document.getElementById('retro-score').innerText = String(score).padStart(3, '0');
+                        playSynthBeep(200, 0.15); // 爆炸音
+
+                        // 隨機爆出升級武器晶片
+                        if (Math.random() < 0.12 && weaponLevel === 1) {
+                            items.push({ x: e.x, y: e.y });
+                        }
+                    }
+                });
+
+                // 超出邊界
+                if (e.y > gameCanvas.height + 20) {
+                    enemies.splice(eIndex, 1);
+                }
+            });
+
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            isGamePlaying = false;
+            cancelAnimationFrame(gameLoopId);
+            document.getElementById('game-title').innerText = "SOCIAL HP DEPLETED!";
+            document.getElementById('game-over-overlay').classList.remove('hidden');
+            playSynthBeep(60, 0.8); // 墜毀低音
+        }
+
+        // --- 8. 奇葩心靈重組端 (Super Useless Comfort - Rule 6) ---
+        function generateCheesyComfort() {
+            const randomIndex = Math.floor(Math.random() * comfortQuotes.length);
+            document.getElementById('comfort-text').innerText = comfortQuotes[randomIndex];
+
+            // 產生 tacky 炫彩星星掉落效果
+            const container = document.getElementById('tab-synergy');
+            const emojis = ["✨", "💖", "🌟", "🔥", "🍭", "🥇", "🎉"];
+            for (let i = 0; i < 15; i++) {
+                const star = document.createElement('div');
+                star.className = 'falling-star text-lg';
+                star.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                star.style.left = Math.random() * 90 + '%';
+                star.style.top = '0px';
+                star.style.animationDelay = Math.random() * 1.5 + 's';
+                container.appendChild(star);
+
+                // 3秒後移除
+                setTimeout(() => { star.remove(); }, 3000);
+            }
+            playSynthBeep(1200, 0.15);
+        }
+
+        // --- 9. 專屬偶像祭壇核心邏輯 (5個 Q 版相框拖曳、持久保存、清除與清空邏輯) ---
+        
+        // 渲染 5 大 Q 版相框 (完美對應手機/電腦版面不同配置，並支援拖曳、上傳及點擊)
+        function renderIdolSlots() {
+            const container = document.getElementById('idol-grid-container');
+            if (!container) return;
+
+            let layoutClasses = [];
+            if (isDesktopLayout) {
+                // 電腦版配置：較大、網格並列排版
+                layoutClasses = [
+                    "col-span-2 row-span-2 h-80", // 相框 1 (特大)
+                    "col-span-1 row-span-2 h-80", // 相框 2 (中立)
+                    "col-span-1 row-span-1 h-36", // 相框 3 (小方型)
+                    "col-span-2 row-span-1 h-36", // 相框 4 (中扁)
+                    "col-span-1 row-span-1 h-36"  // 相框 5 (標準方型)
+                ];
+                container.className = "grid grid-cols-4 gap-4 mt-3";
+            } else {
+                // 手機版配置：直向堆疊、符合單手操作
+                layoutClasses = [
+                    "col-span-2 h-48",  // 相框 1 (大)
+                    "col-span-1 h-40",  // 相框 2 (中)
+                    "col-span-1 h-40",  // 相框 3 (小)
+                    "col-span-2 h-36",  // 相框 4 (中扁)
+                    "col-span-2 h-40"   // 相框 5 (標準)
+                ];
+                container.className = "grid grid-cols-2 gap-3 mt-3";
+            }
+
+            // Q 版黃色星星裝飾 SVG (具彈跳動畫效果)
+            const starDec = `
+                <svg class="w-6 h-6 absolute -top-2.5 -left-2.5 drop-shadow animate-bounce z-10" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1">
+                    <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.62L12 2L9.19 8.62L2 9.24L7.45 13.97L5.82 21L12 17.27Z"/>
+                </svg>
+            `;
+            // Q 版動態彗星裝飾 SVG (具有縮放呼吸效果)
+            const cometDec = `
+                <svg class="w-7 h-7 absolute -bottom-3 -right-3 drop-shadow animate-pulse z-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 21L12 12M5 19L11 13M3 17L9 11" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="16" cy="8" r="5" fill="#3B82F6" stroke="#1D4ED8" stroke-width="1.5"/>
+                    <circle cx="15" cy="7" r="2" fill="#FFFFFF"/>
+                </svg>
+            `;
+            // Q 版精緻金斧頭裝飾 SVG (高質感漸層)
+            const axeDec = `
+                <svg class="w-7 h-7 absolute -top-3 -right-3 drop-shadow z-10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C8 2 6 5 6 9C6 11 7 12 8 13L11 13L11 20C11 21 12 21 12.5 21C13 21 13.5 21 13.5 20L13.5 13L16 13C17 12 18 11 18 9C18 5 16 2 12 2Z" fill="#FBBF24" stroke="#D97706" stroke-width="1.5"/>
+                    <line x1="12.5" y1="13" x2="12.5" y2="20" stroke="#78350F" stroke-width="2"/>
+                    <circle cx="15" cy="6" r="1.5" fill="#FFFFFF"/>
+                </svg>
+            `;
+
+            // 五組不同的相框邊框與裝飾組合樣式 (包含星星、彗星、金斧頭)
+            const slotStyles = [
+                { border: "border-4 border-dashed border-blue-500 rounded-xl bg-blue-950/20", dec: starDec + cometDec, name: "彗星閃耀大相框" },
+                { border: "border-8 border-white rounded shadow-lg bg-zinc-800", dec: axeDec + starDec, name: "Polaroid 斧星相框" },
+                { border: "border-2 border-amber-500 rounded-full bg-amber-950/20", dec: starDec, name: "迷你星環相框" },
+                { border: "border-4 border-indigo-500/80 rounded-lg bg-indigo-950/20 shadow-[0_0_15px_rgba(99,102,241,0.5)]", dec: cometDec, name: "霓虹彗星相框" },
+                { border: "border-4 border-double border-yellow-500 rounded-2xl bg-yellow-950/20", dec: axeDec, name: "黃金戰斧相框" }
+            ];
+
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                const hasImg = idolImages[i] !== null;
+                const imgStyle = hasImg ? `background-image: url('${idolImages[i]}'); background-size: cover; background-position: center;` : '';
+                
+                html += `
+                    <div 
+                        id="idol-slot-${i}"
+                        class="relative flex flex-col items-center justify-center overflow-hidden transition-all duration-300 select-none ${layoutClasses[i]} ${slotStyles[i].border}"
+                        style="${imgStyle}"
+                        ondragover="event.preventDefault(); this.classList.add('scale-[1.03]', 'brightness-110');"
+                        ondragleave="this.classList.remove('scale-[1.03]', 'brightness-110');"
+                        ondrop="event.preventDefault(); this.classList.remove('scale-[1.03]', 'brightness-110'); handleIdolDrop(event, ${i});"
+                        ondblclick="event.stopPropagation(); clearSingleIdolImage(${i});"
+                    >
+                        <!-- 裝飾元素置頂層 -->
+                        ${slotStyles[i].dec}
+
+                        <!-- 空白提示使用者拖曳 (已移除單下點擊功能以徹底避免衝突) -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-3 text-center bg-black/40 hover:bg-black/25 transition-colors ${hasImg ? 'opacity-0 hover:opacity-100' : 'opacity-100'}">
+                            ${hasImg ? `
+                                <span class="text-[10px] bg-black/80 px-2 py-1 rounded text-zinc-300 backdrop-blur-sm pointer-events-none font-bold">
+                                    按兩下快速清空 🚫
+                                </span>
+                            ` : `
+                                <i class="fa-solid fa-plus text-sm mb-1 text-zinc-400"></i>
+                                <span class="text-[10px] font-bold text-zinc-200 leading-tight block select-none pointer-events-none">
+                                    拖曳圖片至此填滿該格<br><span class="text-[9px] text-zinc-400">${slotStyles[i].name}</span>
+                                </span>
+                                <span class="text-[8px] text-zinc-500 mt-1 block pointer-events-none">
+                                    (僅支援本機圖片拖放)
+                                </span>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 處理拖曳圖片放入
+        function handleIdolDrop(e, index) {
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                handleIdolFile(files[0], index);
+            }
+        }
+
+        // 讀取檔案轉為 base64 儲存 (保證頁面切換後不遺失)
+        function handleIdolFile(file, index) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                idolImages[index] = e.target.result;
+                renderIdolSlots();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 按兩下 (Double Click) 快速清空單個相框
+        function clearSingleIdolImage(index) {
+            idolImages[index] = null;
+            renderIdolSlots();
+        }
+
+        // 清空所有相框 (切換配置排版模式時調用)
+        function clearIdolImages() {
+            idolImages = [null, null, null, null, null];
+            renderIdolSlots();
+        }
+
+        // Web Audio 發射仿真音效
+        function playSynthBeep(freq, duration) {
+            try {
+                const actx = new (window.AudioContext || window.webkitAudioContext)();
+                let osc = actx.createOscillator();
+                let gain = actx.createGain();
+                
+                osc.type = freq < 200 ? 'sawtooth' : 'square';
+                osc.frequency.setValueAtTime(freq, actx.currentTime);
+                if (freq > 800) {
+                    // 鐳射急速降頻
+                    osc.frequency.exponentialRampToValueAtTime(100, actx.currentTime + duration);
+                }
+                
+                gain.gain.setValueAtTime(0.04, actx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(actx.destination);
+                
+                osc.start();
+                osc.stop(actx.currentTime + duration);
+            } catch (e) {}
+        }
+    </script>
+</body>
+</html>
